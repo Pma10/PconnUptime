@@ -1,5 +1,5 @@
 import discord
-import time
+from Command.Mongo import MongoDB
 from datetime import datetime, timedelta
 from mcstatus import JavaServer
 from discord.ext import commands, tasks
@@ -26,6 +26,7 @@ class Lookup(Cog):
                 self.todayMost[0] = player
                 self.todayMost[1] = datetime.now()
             if datetime.now().date() != self.todayMost[1].date():
+                await MongoDB.insertTodayMostUsers(datetime.now().date(),self.todayMost[0])
                 self.todayMost[0] = player
                 self.todayMost[1] = datetime.now()
             channel = self.app.get_channel(1192493690699129026)
