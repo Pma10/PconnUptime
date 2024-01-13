@@ -1,5 +1,5 @@
 import discord,time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from mcstatus.server import JavaServer
 from discord.ext import commands, tasks
 from discord.ext.commands import Cog
@@ -13,6 +13,7 @@ class Lookup(Cog):
         self.pconn_address = 'pvpconnect.xyz'
         self.today_most_player = [0, 0]
         self.today_most_ping = [0, 0]
+        self.today = datetime.now().date()
         self.check_server_status.start()
 
     def cog_unload(self):
@@ -26,18 +27,24 @@ class Lookup(Cog):
             nowTimestamp = int(time.mktime(time.localtime()))
             player, ping, max_players = status.players.online, int(status.latency), status.players.max
 
+            if self.today != datetime.now().date():
+                self.today_most_player[player,nowTimestamp]
+                self.today_most_ping[ping,nowTimestamp]
+                self.today = datetime.now().date()
+                
             if player > self.today_most_player[0]:
                 self.today_most_player = [player, nowTimestamp]
 
             if ping > self.today_most_ping[0]:
                 self.today_most_ping = [ping, nowTimestamp]
 
+
             channel = self.app.get_channel(self.channel_id)
             message = await channel.fetch_message(self.message_id) if self.message_id else None
 
             embed = discord.Embed(title='Pvpconnect Server Info', color=0xa2cfd6)
             embed.description = f'\n **{status.motd.parsed[14]}** \n \n **핑** \n > {ping}ms \n **최대 핑** \n > {self.today_most_ping[0]}ms <t:{self.today_most_ping[1]}:R> \n **버전** \n > {status.version.name}\n **접속자**\n > {player}/{max_players}명 \n **최고 동접** \n > {self.today_most_player[0]}/{max_players}명 <t:{self.today_most_player[1]}:R>'
-            embed.timestamp = datetime.utcnow() + timedelta(hours=9)
+            embed.timestamp = datetime.now(timezone(timedelta(hours=9))).timestamp()
             embed.set_thumbnail(url='https://cdn.discordapp.com/icons/1075028593421340733/94f2cee2abdf7cbb0e7d0330985de477.png?size=4096')
 
             if message:
